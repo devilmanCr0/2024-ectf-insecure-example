@@ -80,7 +80,7 @@ def image_update(in_file, port):
 
         index = 0
         block_bytes = image_fp.read(READ_CHUNK)
-        while index < img_size:
+        while index < TOTAL_SIZE:
             t.update(READ_CHUNK)
 
             ser.write(block_bytes)
