@@ -19,6 +19,8 @@ PAGE_SIZE = 8192
 APP_PAGES = 28
 TOTAL_SIZE = APP_PAGES * PAGE_SIZE
 
+READ_CHUNK = 16
+
 success_codes = [1, 2, 3, 4, 5, 7, 8, 10, 11, 13, 16, 18, 19, 20]
 error_codes = [6, 9, 12, 14, 15, 17]
 
@@ -60,6 +62,8 @@ def image_update(in_file, port):
         print(f"Image file {img_file} not found. Exiting")
         exit()
 
+    img_size = img_file.stat().st_size
+
     with open(img_file, "rb") as image_fp:
         # Send update command
         print("Requesting update")
@@ -74,13 +78,15 @@ def image_update(in_file, port):
 
         t = tqdm(total=(TOTAL_SIZE))
 
-        block_bytes = image_fp.read(16)
-        while block_bytes != b"":
-            t.update(16)
+        index = 0
+        block_bytes = image_fp.read(READ_CHUNK)
+        while index < img_size:
+            t.update(READ_CHUNK)
 
             ser.write(block_bytes)
             verify_resp(ser, print_out=False)
-            block_bytes = image_fp.read(16)
+            block_bytes = image_fp.read(READ_CHUNK).rjust(READ_CHUNK, b"\x00")
+            index += READ_CHUNK
 
         t.close()
 
